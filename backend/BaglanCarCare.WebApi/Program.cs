@@ -110,12 +110,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseSerilogRequestLogging(); // HTTP isteklerini logla
+app.UseSerilogRequestLogging(); 
 
 app.UseCors("AllowAll");
+
+// SPA Support
+app.UseStaticFiles(); 
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
+app.MapFallbackToFile("index.html"); // Redirect unhandled requests to React
 
 try 
 {
