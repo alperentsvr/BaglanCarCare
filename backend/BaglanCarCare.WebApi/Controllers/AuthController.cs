@@ -12,7 +12,7 @@ namespace BaglanCarCare.WebApi.Controllers
         private readonly IAuthService _s; public AuthController(IAuthService s) { _s = s; }
         [HttpPost("login")] public async Task<IActionResult> Login(LoginDto r) => Ok(await _s.LoginAsync(r));
         
-        [Authorize(Roles = "Admin")]
+        [AllowAnonymous] // Herkes kayıt olabilir
         [HttpPost("register")] public async Task<IActionResult> Register(RegisterDto r) => Ok(await _s.RegisterAsync(r));
         
         [Authorize(Roles = "Admin")]
