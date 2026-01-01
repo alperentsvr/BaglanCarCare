@@ -14,6 +14,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
+// Sentry Integration
+builder.WebHost.UseSentry(o =>
+{
+    // DSN value will be read from "Sentry:Dsn" in appsettings or "SENTRY_DSN" env var
+    o.Dsn = builder.Configuration["Sentry:Dsn"];
+    o.Debug = true;
+    o.TracesSampleRate = 1.0;
+});
+
 // 2. Add services
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddApplicationServices();
