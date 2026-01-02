@@ -12,11 +12,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1. Serilog Setup
 // 1. Serilog Setup & Sentry
-builder.WebHost.UseSentry(o =>
+var sentryDsn = builder.Configuration["Sentry:Dsn"];
+if (!string.IsNullOrEmpty(sentryDsn))
 {
-    o.Dsn = builder.Configuration["Sentry:Dsn"];
-    o.TracesSampleRate = 1.0;
-});
+    builder.WebHost.UseSentry(o =>
+    {
+        o.Dsn = sentryDsn;
+        o.TracesSampleRate = 1.0;
+    });
+}
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
