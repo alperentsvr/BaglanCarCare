@@ -10,8 +10,7 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyMetadata("Sentry.ProjectDirectory", ("C:\\Users\\Alperen\\Desktop\\BaglanCarCareProject-DockerNew\\backend\\BaglanCarCare.Web" +
-    "Api\\"))]
+[assembly: System.Reflection.AssemblyMetadata("Sentry.ProjectDirectory", "C:\\Users\\Alperen\\Desktop\\bağlanCarCare\\backend\\BaglanCarCare.WebApi\\")]
 
 // MSBuild WriteCodeFragment sınıfı tarafından oluşturuldu.
 

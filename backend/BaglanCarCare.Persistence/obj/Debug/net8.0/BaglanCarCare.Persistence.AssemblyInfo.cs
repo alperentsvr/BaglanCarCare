@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BaglanCarCare.Persistence")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2b7aac2224b6b71ee87488996cb714615cdf33dd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d3741573746235639bfcc50d89dde59c859ce393")]
 [assembly: System.Reflection.AssemblyProductAttribute("BaglanCarCare.Persistence")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BaglanCarCare.Persistence")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

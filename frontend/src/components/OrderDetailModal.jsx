@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Save, User, FileText, Activity, Check, DollarSign, Trash2, Plus, Calendar, Disc } from "lucide-react"; 
+import { X, Save, User, FileText, Activity, Check, DollarSign, Trash2, Plus, Calendar, Disc, AlertTriangle } from "lucide-react"; 
 import { orderService } from "../api";
 
 const OrderDetailModal = ({ order, staff, user, onClose, onSave }) => {
@@ -61,7 +61,8 @@ const OrderDetailModal = ({ order, staff, user, onClose, onSave }) => {
         await onSave({
             ...order,
             personnelIds,
-            status: STATUS_LABELS[statusId], 
+            statusId: statusId, // Backend expects integer StatusId
+            status: STATUS_LABELS[statusId], // Keep string for UI update immediately if needed
             description,
             isPaid,
             services,
