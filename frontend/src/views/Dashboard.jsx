@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Car, LogOut, ClipboardList, Check, Clock, TrendingUp, Users, DollarSign, Plus, Search, ChevronDown, ChevronRight, Trash2, Settings, Loader2, AlertTriangle, Tag, UserCheck, Moon, Sun, Phone, Calendar, User } from "lucide-react";
+import { Car, LogOut, ClipboardList, Check, Clock, TrendingUp, Users, DollarSign, Plus, Search, ChevronDown, ChevronRight, Trash2, Settings, Loader2, AlertTriangle, Tag, UserCheck, Moon, Sun, Phone, Calendar, User, X } from "lucide-react";
 
 import NewOrderWizard from "./NewOrderWizard"; 
 import CalendarView from "../components/CalendarView";
@@ -30,7 +30,37 @@ const OrderList = ({ orders, onEdit, onDelete }) => {
 
   const toggleExpand = (id) => setExpandedOrderId(expandedOrderId === id ? null : id);
 
+  // Excel/CSV İndirme Fonksiyonu
+  const exportToCSV = () => {
+    const BOM = "\uFEFF";
+    const headers = ["ID", "Tarih", "Plaka", "Müşteri", "Telefon", "Marka/Model", "Durum", "Tutar", "Ödeme", "Personel"];
+    const rows = filtered.map(o => [
+        o.id,
+        safeDate(o.date),
+        o.plate,
+        `"${o.customer.replace(/"/g, '""')}"`,
+        `"${(o.phone || "").replace(/"/g, '""')}"`,
+        `${o.brand} ${o.model}`,
+        o.status,
+        o.totalPrice,
+        o.isPaid ? "Ödendi" : "Bekliyor",
+        `"${(o.assignedStaff || "").replace(/"/g, '""')}"`
+    ]);
 
+    const csvContent = BOM + [
+        headers.join(";"),
+        ...rows.map(r => r.join(";"))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Is_Emirleri_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="space-y-6">
@@ -45,14 +75,19 @@ const OrderList = ({ orders, onEdit, onDelete }) => {
             placeholder="Plaka veya Müşteri Ara..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         
-        {/* Görünüm Değiştirici */}
-        <div className="flex w-full md:w-auto bg-gray-100 dark:bg-dark-card p-1 rounded-lg border border-gray-200 dark:border-dark-border">
-            <button onClick={() => setViewMode("list")} className={`flex-1 md:flex-none justify-center px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === "list" ? "bg-white dark:bg-dark-bg shadow-sm text-blue-600 dark:text-brand" : "text-gray-500 hover:text-gray-700 dark:text-gray-400"}`}>
-                <ClipboardList size={16}/> Liste
+        {/* Görünüm Değiştirici ve Export */}
+        <div className="flex gap-2 w-full md:w-auto">
+            <button onClick={exportToCSV} className="hidden md:flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 shadow-sm text-sm font-medium">
+                <ClipboardList size={18}/> Excel İndir
             </button>
-            <button onClick={() => setViewMode("board")} className={`flex-1 md:flex-none justify-center px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === "board" ? "bg-white dark:bg-dark-bg shadow-sm text-blue-600 dark:text-brand" : "text-gray-500 hover:text-gray-700 dark:text-gray-400"}`}>
-                <Tag size={16}/> Pano
-            </button>
+            <div className="flex flex-1 md:flex-none bg-gray-100 dark:bg-dark-card p-1 rounded-lg border border-gray-200 dark:border-dark-border">
+                <button onClick={() => setViewMode("list")} className={`flex-1 md:flex-none justify-center px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === "list" ? "bg-white dark:bg-dark-bg shadow-sm text-blue-600 dark:text-brand" : "text-gray-500 hover:text-gray-700 dark:text-gray-400"}`}>
+                    <ClipboardList size={16}/> Liste
+                </button>
+                <button onClick={() => setViewMode("board")} className={`flex-1 md:flex-none justify-center px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === "board" ? "bg-white dark:bg-dark-bg shadow-sm text-blue-600 dark:text-brand" : "text-gray-500 hover:text-gray-700 dark:text-gray-400"}`}>
+                    <Tag size={16}/> Pano
+                </button>
+            </div>
         </div>
       </div>
       
@@ -145,13 +180,16 @@ const OrderList = ({ orders, onEdit, onDelete }) => {
                       </div>
                     </div>
                     
-                    {/* Hizmetler ve Alt Bilgi (Aynı) */}
+                    {/* Hizmetler ve Alt Bilgi (GÜNCELLENDİ) */}
                      <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2"><Tag size={14}/> Yapılacak İşlemler</h4>
                      {order.services && order.services.length > 0 ? (
                         <div className="space-y-2 mb-4">
                             {order.services.map((s,i) => (
-                                <div key={i} className="flex justify-between p-2 rounded bg-white border border-gray-200 dark:bg-dark-card dark:border-dark-border">
-                                    <span className="text-sm">{s.product || s.Product}</span>
+                                <div key={i} className="flex justify-between items-center p-2 rounded bg-white border border-gray-200 dark:bg-dark-card dark:border-dark-border">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs text-gray-400">{s.category || s.Category}</span>
+                                        <span className="text-sm font-medium">{s.product || s.Product}</span>
+                                    </div>
                                     <span className="font-bold text-sm">₺{s.price || s.Price}</span>
                                 </div>
                             ))}
@@ -159,7 +197,7 @@ const OrderList = ({ orders, onEdit, onDelete }) => {
                      ) : <div className="text-gray-500 italic text-sm mb-4">Hizmet yok.</div>}
 
                      <div className="flex justify-end pt-3 border-t border-gray-200 dark:border-dark-border">
-                        <span className="font-bold text-blue-600 dark:text-brand">{order.assignedStaff}</span>
+                        <span className="font-bold text-blue-600 dark:text-brand flex items-center gap-2"><User size={14}/> {order.assignedStaff}</span>
                      </div>
                   </div>
                 )}
@@ -409,7 +447,7 @@ const Dashboard = ({ user, onLogout }) => {
     totalRevenue: orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0) // Ciro her zaman toplam işlem tutarıdır, sadece tamamlananlar değil. İsteğe göre değişebilir ama genelde toplam iş hacmi gösterilir. DEĞİŞİKLİK: Kullanıcı "Ciro 0" dedi, tamamlanmayanlar da görünsün isteniyor olabilir veya statüler uyuşmuyor. Ben hepsini topluyorum şimdilik.
   };
 
-  const StaffList = ({ staff, onAdd, onDetail, onDelete }) => (
+  const StaffList = ({ staff, onAdd, onDetail, onDelete, user }) => (
     <div>
       <div className="flex justify-end mb-4">
         <button onClick={onAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm">
@@ -428,12 +466,18 @@ const Dashboard = ({ user, onLogout }) => {
                 {/* İSİM BURADA GÖRÜNÜYOR */}
                 <h3 className="font-bold text-gray-800 dark:text-gray-100">{p.name || "İsimsiz"}</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{p.role || "Görev Yok"}</p>
-                <p className="text-xs text-green-600 dark:text-green-400 font-bold mt-1">₺{p.salary?.toLocaleString()}</p>
+                {/* MAAŞ - SADECE ADMIN GÖREBİLİR */}
+                {user.role === "Admin" && (
+                    <p className="text-xs text-green-600 dark:text-green-400 font-bold mt-1">₺{p.salary?.toLocaleString()}</p>
+                )}
               </div>
             </div>
-            <button onClick={(e)=>{e.stopPropagation();onDelete(p.id)}} className="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50">
-                <Trash2 size={18}/>
-            </button>
+            {/* SİLME BUTONU - SADECE ADMIN GÖREBİLİR */}
+            {user.role === "Admin" && (
+                <button onClick={(e)=>{e.stopPropagation();onDelete(p.id)}} className="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50">
+                    <Trash2 size={18}/>
+                </button>
+            )}
           </div>
         ))}
         {staff.length === 0 && <div className="col-span-3 text-center text-gray-400 py-10">Kayıtlı personel bulunamadı.</div>}
@@ -661,7 +705,7 @@ const Dashboard = ({ user, onLogout }) => {
                     </div>
                 </div>
               )}
-              {activeTab === "staff" && <StaffList staff={staff} onAdd={() => setShowAddStaff(true)} onDetail={(p) => setShowStaffDetail(p)} onDelete={handleDeleteStaff} />}
+              {activeTab === "staff" && <StaffList staff={staff} onAdd={() => setShowAddStaff(true)} onDetail={(p) => setShowStaffDetail(p)} onDelete={handleDeleteStaff} user={user} />}
               {activeTab === "accounting" && <AccountingView expenses={expenses} orders={orders} onAdd={() => setShowAddExpense(true)} onDelete={handleDeleteExpense} onDeleteOrder={handleDeleteOrder} />}
               {activeTab === "settings" && <SettingsView />}
               
@@ -704,15 +748,46 @@ const Dashboard = ({ user, onLogout }) => {
                      <div className="space-y-3">
                        {requests.map(r => (
                          <div key={r.id} className="border p-4 rounded-lg flex justify-between items-center bg-gray-50 dark:bg-dark-hover">
-                            <div>
-                               <p className="font-bold text-red-600">{r.requesterName} bir silme talebi oluşturdu.</p>
-                               <p className="text-sm text-gray-600 dark:text-gray-300">Hedef: <span className="font-mono">{r.targetEntityName} #{r.targetId}</span></p>
-                               <p className="text-xs text-gray-500 italic">Not: {r.note}</p>
-                               <p className="text-xs text-gray-400 mt-1">{new Date(r.requestedDate).toLocaleString()}</p>
+                            <div className="flex-1">
+                               <p className="font-bold text-red-600 flex items-center gap-2">
+                                  <AlertTriangle size={16} />
+                                  {(() => {
+                                      // Kullanıcı ismini bulmaya çalış
+                                      const reqUser = users.find(u => u.id === r.requesterId || u.username === r.requesterName);
+                                      return reqUser ? reqUser.fullName || reqUser.username : (r.requesterName || "Bilinmeyen Kullanıcı");
+                                  })()} 
+                                  <span className="font-normal text-gray-600 dark:text-gray-400">silme talebinde bulundu.</span>
+                               </p>
+                               
+                               <div className="mt-2 space-y-1">
+                                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                                      <span className="font-semibold">Hedef:</span> 
+                                      {r.targetEntityName === "Order" ? " İş Emri" : r.targetEntityName === "Expense" ? " Gelir/Gider" : " Personel"}
+                                      <span className="font-mono bg-white dark:bg-dark-bg px-1 rounded ml-1 border dark:border-dark-border">#{r.targetId}</span>
+                                  </p>
+                                  {r.note && (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 italic bg-white dark:bg-dark-bg/50 p-2 rounded border border-gray-100 dark:border-dark-border/50">
+                                        "{r.note}"
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                                      <Clock size={12}/> 
+                                      {(() => {
+                                          try {
+                                              const d = new Date(r.requestedDate || r.requestDate || r.date);
+                                              return isNaN(d.getTime()) ? "Tarih Hatası" : d.toLocaleString('tr-TR');
+                                          } catch { return "Tarih Yok"; }
+                                      })()}
+                                  </p>
+                               </div>
                             </div>
-                            <div className="flex gap-2">
-                               <button onClick={() => handleApproveRequest(r.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Onayla</button>
-                               <button onClick={() => handleRejectRequest(r.id)} className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Reddet</button>
+                            <div className="flex flex-col gap-2 ml-4">
+                               <button onClick={() => handleApproveRequest(r.id)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 font-medium shadow-sm flex items-center justify-center gap-1">
+                                   <Check size={16}/> Onayla
+                               </button>
+                               <button onClick={() => handleRejectRequest(r.id)} className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:bg-dark-card dark:border-dark-border dark:text-gray-300 dark:hover:bg-dark-hover font-medium shadow-sm flex items-center justify-center gap-1">
+                                   <X size={16}/> Reddet
+                               </button>
                             </div>
                          </div>
                        ))}

@@ -5,143 +5,99 @@ import { orderService } from "../api";
 const OrderDetailModal = ({ order, staff, onClose, onSave }) => {
   // Statü Helper
   const getStatusId = (statusStr) => {
-    if (!statusStr) return 1;
+    if (!statusStr) return 0;
     const s = statusStr.toLowerCase();
-    if (s.includes("bekliyor") || s.includes("pending")) return 1;
-    if (s.includes("işlemde") || s.includes("progress")) return 2;
-    if (s.includes("tamam") || s.includes("completed")) return 3;
-    if (s.includes("iptal") || s.includes("cancel")) return 4;
-    return 1;
+    if (s.includes("bekliyor") || s.includes("pending")) return 0;
+    if (s.includes("işlemde") || s.includes("progress")) return 1;
+    if (s.includes("tamam") || s.includes("completed")) return 2;
+    if (s.includes("iptal") || s.includes("cancel")) return 3;
+    return 0;
   };
 
   const [personnelIds, setPersonnelIds] = useState(order.personnelIds || []);
-  const [statusId, setStatusId] = useState(1);
+  const [statusId, setStatusId] = useState(0);
   const [description, setDescription] = useState(order.description || "");
   const [isPaid, setIsPaid] = useState(order.isPaid || false); 
   const [loading, setLoading] = useState(false);
 
-  // Hizmetler State
-  const [services, setServices] = useState([]);
-  const [totalPrice, setTotalPrice] = useState(0);
+  const [services, setServices] = useState(order.services || []);
   const [newService, setNewService] = useState({ product: "", price: "" });
 
-  // İlk Yükleme
-  useEffect(() => {
-    setStatusId(getStatusId(order.status));
-    
-    // Hizmetleri normalize et
-    const initialServices = (order.services || []).map(s => ({
-        product: s.product || s.Product || "Bilinmeyen Hizmet",
-        price: parseFloat(s.price || s.Price) || 0,
-        category: s.category || s.Category || "Genel",
-        part: s.part || s.Part || "-"
-    }));
-    setServices(initialServices);
-    setTotalPrice(order.totalPrice || 0);
-  }, [order]);
-
-  // Fiyat Hesaplama
-  useEffect(() => {
-    const sum = services.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0);
-    setTotalPrice(sum);
-  }, [services]);
+  const totalPrice = services.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
 
   const toggleStaff = (id) => {
-    setPersonnelIds((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+    setPersonnelIds(prev => 
+      prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
     );
   };
 
-  const handleDeleteService = (index) => {
-    if(!confirm("Bu işlemi silmek istediğinize emin misiniz?")) return;
-    const newServices = [...services];
-    newServices.splice(index, 1);
-    setServices(newServices);
-  };
-
-  const handleUpdateServicePrice = (index, val) => {
-    const newServices = [...services];
-    newServices[index].price = val;
-    setServices(newServices);
-  };
-
   const handleAddService = () => {
-     if(!newService.product || !newService.price) return;
-     const newItem = {
-        product: newService.product,
-        price: parseFloat(newService.price),
-        category: "Ekstra",
-        part: "-"
-     };
-     setServices([...services, newItem]);
-     setNewService({ product: "", price: "" });
+    if (!newService.product) return;
+    setServices([...services, { ...newService, price: parseFloat(newService.price) || 0, category: "Ekstra", part: "-" }]);
+    setNewService({ product: "", price: "" });
   };
-  
+
+  const handleDeleteService = (index) => {
+    setServices(services.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateServicePrice = (index, value) => {
+      const newServices = [...services];
+      newServices[index].price = value;
+      setServices(newServices);
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
-      const payload = {
-        orderId: order.id,
-        statusId: parseInt(statusId),
-        description: description,
-        personnelIds: personnelIds,
-        isPaid: isPaid,
-        selectedServices: services.map(s => ({
-            category: s.category,
-            product: s.product,
-            price: parseFloat(s.price),
-            part: s.part,
-            spec: ""
-        })),
-        totalPrice: totalPrice
-      };
-
-      await orderService.update(payload);
-      onSave(); 
-    } catch (error) {
-      alert("Hata: " + (error.response?.data?.Message || error.message));
+        await onSave({
+            ...order,
+            personnelIds,
+            status: statusId, 
+            description,
+            isPaid,
+            services,
+            totalPrice
+        });
+        onClose();
+    } catch (e) {
+        console.error(e);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transition-colors bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border">
-        
-        {/* HEADER */}
-        <div className="p-5 border-b flex justify-between items-start bg-gray-50/50 dark:bg-dark-bg/50">
-          <div className="flex gap-4">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-brand/20 rounded-xl flex items-center justify-center text-blue-600 dark:text-brand">
-                  <FileText size={24} />
-              </div>
-              <div>
-                <h3 className="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                    {order.plate}
-                </h3>
-                <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    <span className="flex items-center gap-1"><Calendar size={14}/> {new Date(order.date).toLocaleDateString("tr-TR")}</span>
-                    <span className="flex items-center gap-1"><User size={14}/> {order.customerName}</span>
-                    <span className="flex items-center gap-1"><Disc size={14}/> {order.vehicle} • {order.year} • {order.color}</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="bg-white dark:bg-dark-card w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            {/* HEADER */}
+            <div className="flex justify-between items-center p-4 border-b dark:border-dark-border bg-gray-50 dark:bg-dark-hover/20">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/30 dark:text-blue-400">
+                        <FileText size={20} />
+                    </div>
+                    <div>
+                        <h2 className="font-bold text-lg text-gray-800 dark:text-gray-100">Sipariş Detayı</h2>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">#{order?.id || "---"}</span>
+                    </div>
                 </div>
-              </div>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"><X size={24}/></button>
-        </div>
+                <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors dark:hover:bg-red-900/20">
+                    <X size={20} />
+                </button>
+            </div>
 
-        {/* SCROLLABLE BODY */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          
+            {/* BODY */}
+            <div className="p-4 overflow-y-auto space-y-4 flex-1">
             {/* DURUM & ÖDEME KARTI */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <label className="text-xs font-bold uppercase text-gray-400">İşlem Durumu</label>
                     <div className="grid grid-cols-2 gap-2">
                         {[
-                            { id: 1, label: "Bekliyor", color: "text-orange-800 bg-orange-100 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800" },
-                            { id: 2, label: "İşlemde", color: "text-blue-800 bg-blue-100 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800" },
-                            { id: 3, label: "Tamamlandı", color: "text-green-800 bg-green-100 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800" },
-                            { id: 4, label: "İptal", color: "text-red-800 bg-red-100 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800" }
+                            { id: 0, label: "Bekliyor", color: "text-orange-800 bg-orange-100 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800" },
+                            { id: 1, label: "İşlemde", color: "text-blue-800 bg-blue-100 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800" },
+                            { id: 2, label: "Tamamlandı", color: "text-green-800 bg-green-100 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800" },
+                            { id: 3, label: "İptal", color: "text-red-800 bg-red-100 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800" }
                         ].map(s => (
                             <button key={s.id} onClick={() => setStatusId(s.id)}
                             className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all flex items-center justify-center gap-2
@@ -154,7 +110,7 @@ const OrderDetailModal = ({ order, staff, onClose, onSave }) => {
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-gray-400">Ödeme Durumu</label>
+    {/* ... Payment section ... */}
                     <div onClick={() => setIsPaid(!isPaid)} className={`cursor-pointer border rounded-xl p-3 flex items-center justify-between transition-all
                         ${isPaid ? "bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800" : "bg-gray-50 border-gray-200 dark:bg-dark-card dark:border-dark-border hover:bg-gray-100"}`}>
                         <div className="flex items-center gap-3">
@@ -171,7 +127,7 @@ const OrderDetailModal = ({ order, staff, onClose, onSave }) => {
                 </div>
             </div>
 
-            {/* PERSONEL SEÇİMİ */}
+            {/* PERSONEL SEÇİMİ (unchanged) */}
             <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-gray-400 flex items-center gap-2"><User size={14}/> Personel Ata</label>
                 <div className="flex flex-wrap gap-2">
@@ -215,7 +171,12 @@ const OrderDetailModal = ({ order, staff, onClose, onSave }) => {
                         <tbody className="divide-y dark:divide-dark-border">
                             {services.map((svc, idx) => (
                                 <tr key={idx} className="group hover:bg-gray-50 dark:hover:bg-dark-hover/50">
-                                    <td className="p-3 font-medium text-gray-800 dark:text-gray-200">{svc.product}</td>
+                                    <td className="p-3 font-medium text-gray-800 dark:text-gray-200">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-gray-400 dark:text-gray-500">{svc.category}</span>
+                                            <span>{svc.product}</span>
+                                        </div>
+                                    </td>
                                     <td className="p-3 text-gray-500 dark:text-gray-400 text-xs">{svc.part}</td>
                                     <td className="p-3">
                                         <input 
