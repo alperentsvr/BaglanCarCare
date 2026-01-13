@@ -4,7 +4,7 @@
     public enum PaymentStatus { Unpaid = 1, Paid = 2 }
 
     // İşlemin süreci (Bekliyor -> İşlemde -> Bitti)
-    public enum TransactionStatus { Pending = 1, InProgress = 2, Completed = 3, Cancelled = 4 }
+    public enum TransactionStatus { Pending = 0, InProgress = 1, Completed = 2, Cancelled = 3 }
 
     // Ödeme Yöntemi (Muhasebe takibi için)
     public enum PaymentMethod

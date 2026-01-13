@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Car, LogOut, ClipboardList, Check, Clock, TrendingUp, Users, DollarSign, Plus, Search, ChevronDown, ChevronRight, Trash2, Settings, Loader2, AlertTriangle, Tag, UserCheck, Moon, Sun, Phone, Calendar, User, X } from "lucide-react";
+import { TRANSACTION_STATUS, getStatusById } from "../constants/enums";
 
 import NewOrderWizard from "./NewOrderWizard"; 
 import CalendarView from "../components/CalendarView";
@@ -41,7 +42,7 @@ const OrderList = ({ orders, onEdit, onDelete }) => {
         `"${o.customer.replace(/"/g, '""')}"`,
         `"${(o.phone || "").replace(/"/g, '""')}"`,
         `${o.brand} ${o.model}`,
-        o.status,
+        getStatusById(o.statusId).label,
         o.totalPrice,
         o.isPaid ? "Ödendi" : "Bekliyor",
         `"${(o.assignedStaff || "").replace(/"/g, '""')}"`
@@ -131,13 +132,9 @@ const OrderList = ({ orders, onEdit, onDelete }) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 justify-between md:justify-end pl-12 md:pl-0 border-t md:border-t-0 pt-3 md:pt-0 mt-3 md:mt-0">
-                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${(() => {
-                        const s = (order.status || "").toLowerCase();
-                        if(s.includes("işlemde") || s.includes("progress")) return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
-                        if(s.includes("tamam") || s.includes("completed")) return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
-                        if(s.includes("iptal") || s.includes("cancel")) return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800";
-                        return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800"; 
-                     })()}`}>{order.status}</span>
+                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusById(order.statusId).color}`}>
+                        {getStatusById(order.statusId).label}
+                     </span>
                     <span className="font-bold text-lg text-gray-800 dark:text-gray-100">₺{order.totalPrice?.toLocaleString()}</span>
                     <div className="flex gap-1 pl-2 border-l border-gray-200 dark:border-dark-border" onClick={(e) => e.stopPropagation()}>
                        <button onClick={() => onEdit(order)} className="p-2 rounded-lg transition-colors text-gray-400 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-dark-hover dark:hover:text-brand"><Settings size={18}/></button>
@@ -212,19 +209,19 @@ const OrderList = ({ orders, onEdit, onDelete }) => {
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-250px)] overflow-x-auto">
             {/* SÜTUNLAR */}
             {[
-                { title: "Bekliyor", statusKey: "bekliyor", color: "bg-orange-50 border-orange-200 dark:bg-orange-900/10 dark:border-orange-800" },
-                { title: "İşlemde", statusKey: "işlemde", color: "bg-blue-50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-800" },
-                { title: "Tamamlandı", statusKey: "tamam", color: "bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800" }
+                TRANSACTION_STATUS.PENDING,
+                TRANSACTION_STATUS.IN_PROGRESS,
+                TRANSACTION_STATUS.COMPLETED
             ].map(col => (
-                <div key={col.statusKey} className={`flex flex-col h-full rounded-xl border ${col.color}`}>
+                <div key={col.id} className={`flex flex-col h-full rounded-xl border ${col.color.replace('text-', 'border-').split(' ')[2] + ' ' + col.color.split(' ')[0]}`}>
                     <div className="p-4 border-b border-gray-200/50 dark:border-dark-border/50 flex justify-between items-center">
-                        <h3 className="font-bold text-gray-800 dark:text-gray-100">{col.title}</h3>
+                        <h3 className="font-bold text-gray-800 dark:text-gray-100">{col.label}</h3>
                         <span className="px-2 py-0.5 rounded-full bg-white dark:bg-dark-bg text-xs font-bold shadow-sm">
-                            {filtered.filter(o => (o.status || "").toLowerCase().includes(col.statusKey)).length}
+                            {filtered.filter(o => o.statusId === col.id).length}
                         </span>
                     </div>
                     <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                        {filtered.filter(o => (o.status || "").toLowerCase().includes(col.statusKey)).map(order => (
+                        {filtered.filter(o => o.statusId === col.id).map(order => (
                             <div key={order.id} onClick={() => onEdit(order)} className="bg-white dark:bg-dark-card p-3 rounded-lg shadow-sm border border-gray-200 dark:border-dark-border hover:shadow-md cursor-pointer transition-all group">
                                 <div className="flex justify-between items-start mb-2">
                                     <span className="font-mono font-bold text-gray-800 dark:text-gray-100">{order.plate}</span>
@@ -313,7 +310,8 @@ const Dashboard = ({ user, onLogout }) => {
         year: (o.Year || o.year || "").toString().trim() || "-",
         vehicle: o.vehicleInfo || o.VehicleInfo || "Araç Yok",
         plate: o.VehiclePlate || o.vehiclePlate || o.Plate || o.plate || "---",
-        status: o.StatusTr || o.statusTr || o.Status || "Bekliyor",
+        statusId: o.StatusId !== undefined ? o.StatusId : 0, // Backend artık StatusId gönderiyor
+
         date: safeDate(o.Date || o.date || o.TransactionDate),
         rawDate: o.Date || o.date || o.TransactionDate, // CalendarView için ham tarih gerekli
         totalPrice: o.TotalPrice || o.totalPrice || 0,
@@ -442,8 +440,8 @@ const Dashboard = ({ user, onLogout }) => {
 
   const stats = {
     totalOrders: orders.length,
-    completedOrders: orders.filter(o => (o.status || "").toLowerCase().includes("tamam") || (o.status || "").toLowerCase().includes("completed")).length,
-    pendingOrders: orders.filter(o => (o.status || "").toLowerCase().includes("bekliyor") || (o.status || "").toLowerCase().includes("pending")).length,
+    completedOrders: orders.filter(o => o.statusId === TRANSACTION_STATUS.COMPLETED.id).length,
+    pendingOrders: orders.filter(o => o.statusId === TRANSACTION_STATUS.PENDING.id).length,
     totalRevenue: orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0) // Ciro her zaman toplam işlem tutarıdır, sadece tamamlananlar değil. İsteğe göre değişebilir ama genelde toplam iş hacmi gösterilir. DEĞİŞİKLİK: Kullanıcı "Ciro 0" dedi, tamamlanmayanlar da görünsün isteniyor olabilir veya statüler uyuşmuyor. Ben hepsini topluyorum şimdilik.
   };
 
@@ -486,7 +484,7 @@ const Dashboard = ({ user, onLogout }) => {
   );
 
   const AccountingView = ({ expenses, orders, onAdd, onDelete, onDeleteOrder }) => {
-    const combinedItems = [...expenses.map(e => ({...e, source:'expense'})), ...orders.filter(o=>(o.status||"").toLowerCase().includes("tamam")||(o.status||"").toLowerCase().includes("completed")).map(o=>({id:o.id, date:o.date, title:`${o.plate} - ${o.customer}`, category:"İş Emri", amount:o.totalPrice, type:"income", source:'order'}))].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const combinedItems = [...expenses.map(e => ({...e, source:'expense'})), ...orders.filter(o=>o.statusId === TRANSACTION_STATUS.COMPLETED.id).map(o=>({id:o.id, date:o.date, title:`${o.plate} - ${o.customer}`, category:"İş Emri", amount:o.totalPrice, type:"income", source:'order'}))].sort((a,b)=>new Date(b.date)-new Date(a.date));
 
     // Excel/CSV İndirme Fonksiyonu
     const exportToCSV = () => {
@@ -688,11 +686,10 @@ const Dashboard = ({ user, onLogout }) => {
                                     <div key={o.id} onClick={() => { setSelectedOrder(o); setShowOrderDetail(true); }} 
                                         className="p-3 rounded-lg border border-gray-100 dark:border-dark-border hover:border-blue-300 dark:hover:border-brand cursor-pointer group transition-all bg-gray-50 dark:bg-dark-bg/50">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="font-bold text-lg group-hover:text-blue-600 dark:group-hover:text-brand transition-colors">{o.plate}</span>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full border
-                                                ${(o.status||"").includes("Bekliyor") ? "bg-orange-100 text-orange-700 border-orange-200" : 
-                                                  (o.status||"").includes("Tamam") ? "bg-green-100 text-green-700 border-green-200" : 
-                                                  "bg-blue-100 text-blue-700 border-blue-200"}`}>{o.status}</span>
+                                            <span className={`font-bold text-lg group-hover:text-blue-600 dark:group-hover:text-brand transition-colors`}>{o.plate}</span>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${getStatusById(o.statusId || 0).color}`}>
+                                                {getStatusById(o.statusId || 0).label}
+                                            </span>
                                         </div>
                                         <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{o.brand} {o.model}</div>
                                         <div className="flex items-center gap-2 text-xs text-gray-400">

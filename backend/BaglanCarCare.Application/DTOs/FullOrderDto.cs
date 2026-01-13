@@ -50,9 +50,7 @@ namespace BaglanCarCare.Application.DTOs
         public string? CustomerEmail { get; set; }
         public string Plate { get; set; } = string.Empty;
         public decimal TotalPrice { get; set; }
-        public string Status { get; set; } = string.Empty;
         public int StatusId { get; set; } // YENİ: Frontend'in enum id'sini bilmesi için
-        public string StatusTr { get; set; } = string.Empty;
         public bool IsPaid { get; set; }
         public DateTime Date { get; set; }
         public string PersonnelNames { get; set; } = string.Empty;

@@ -48,7 +48,6 @@ namespace BaglanCarCare.Application.Services
                 Year = x.Vehicle?.Year.ToString(),
                 Plate = x.Vehicle?.PlateNumber ?? "-",
                 TotalPrice = x.TotalPrice,
-                Status = x.Status.ToString(),
                 IsPaid = x.PaymentStatus == PaymentStatus.Paid,
                 StatusTr = x.Status switch
                 {

@@ -1,29 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { X, Save, User, FileText, Activity, Check, DollarSign, Trash2, Plus, Calendar, Disc, AlertTriangle } from "lucide-react"; 
 import { orderService } from "../api";
+import { TRANSACTION_STATUS, getStatusById } from "../constants/enums";
 
 const OrderDetailModal = ({ order, staff, user, onClose, onSave }) => {
-  // Statü Helper
-  const STATUS_LABELS = {
-    1: "Bekliyor",
-    2: "İşlemde",
-    3: "Tamamlandı",
-    4: "İptal"
-  };
-
-  const getStatusId = (statusStr) => {
-    if (statusStr === undefined || statusStr === null) return 1; // Default Pending
-    if (typeof statusStr === "number") return statusStr;
-    const s = String(statusStr).toLowerCase();
-    if (s.includes("bekliyor") || s.includes("pending")) return 1;
-    if (s.includes("işlemde") || s.includes("progress")) return 2;
-    if (s.includes("tamam") || s.includes("completed")) return 3;
-    if (s.includes("iptal") || s.includes("cancel")) return 4;
-    return 1;
-  };
 
   const [personnelIds, setPersonnelIds] = useState(order.personnelIds || []);
-  const [statusId, setStatusId] = useState(getStatusId(order.status));
+  const [statusId, setStatusId] = useState(order.statusId !== undefined ? order.statusId : 0);
   const [description, setDescription] = useState(order.description || "");
   const [isPaid, setIsPaid] = useState(order.isPaid || false); 
   const [loading, setLoading] = useState(false);
@@ -61,8 +44,10 @@ const OrderDetailModal = ({ order, staff, user, onClose, onSave }) => {
         await onSave({
             ...order,
             personnelIds,
+            ...order,
+            personnelIds,
             statusId: statusId, // Backend expects integer StatusId
-            status: STATUS_LABELS[statusId], // Keep string for UI update immediately if needed
+
             description,
             isPaid,
             services,
@@ -102,12 +87,7 @@ const OrderDetailModal = ({ order, staff, user, onClose, onSave }) => {
                 <div className="space-y-2">
                     <label className="text-xs font-bold uppercase text-gray-400">İşlem Durumu</label>
                     <div className="grid grid-cols-2 gap-2">
-                        {[
-                            { id: 0, label: "Bekliyor", color: "text-orange-800 bg-orange-100 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800" },
-                            { id: 1, label: "İşlemde", color: "text-blue-800 bg-blue-100 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800" },
-                            { id: 2, label: "Tamamlandı", color: "text-green-800 bg-green-100 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800" },
-                            { id: 3, label: "İptal", color: "text-red-800 bg-red-100 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800" }
-                        ].map(s => (
+                        {Object.values(TRANSACTION_STATUS).map(s => (
                             <button key={s.id} onClick={() => setStatusId(s.id)}
                             className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all flex items-center justify-center gap-2
                                 ${statusId === s.id ? `${s.color} ring-2 ring-offset-1 ring-gray-200 dark:ring-dark-border font-bold` : "border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-dark-border dark:text-gray-400 dark:hover:bg-dark-hover"}`}>
