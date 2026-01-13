@@ -44,8 +44,6 @@ const OrderDetailModal = ({ order, staff, user, onClose, onSave }) => {
         await onSave({
             ...order,
             personnelIds,
-            ...order,
-            personnelIds,
             statusId: statusId, // Backend expects integer StatusId
 
             description,
