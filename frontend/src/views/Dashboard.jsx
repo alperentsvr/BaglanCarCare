@@ -310,7 +310,7 @@ const Dashboard = ({ user, onLogout }) => {
         year: (o.Year || o.year || "").toString().trim() || "-",
         vehicle: o.vehicleInfo || o.VehicleInfo || "Araç Yok",
         plate: o.VehiclePlate || o.vehiclePlate || o.Plate || o.plate || "---",
-        statusId: o.StatusId !== undefined ? o.StatusId : 0, // Backend artık StatusId gönderiyor
+        statusId: o.statusId !== undefined ? o.statusId : (o.StatusId !== undefined ? o.StatusId : 0), // Handle both cases
 
         date: safeDate(o.Date || o.date || o.TransactionDate),
         rawDate: o.Date || o.date || o.TransactionDate, // CalendarView için ham tarih gerekli
