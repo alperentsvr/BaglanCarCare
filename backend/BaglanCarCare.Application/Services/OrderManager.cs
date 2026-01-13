@@ -49,14 +49,7 @@ namespace BaglanCarCare.Application.Services
                 Plate = x.Vehicle?.PlateNumber ?? "-",
                 TotalPrice = x.TotalPrice,
                 IsPaid = x.PaymentStatus == PaymentStatus.Paid,
-                StatusTr = x.Status switch
-                {
-                    TransactionStatus.Pending => "Bekliyor",
-                    TransactionStatus.InProgress => "İşlemde",
-                    TransactionStatus.Completed => "Tamamlandı",
-                    TransactionStatus.Cancelled => "İptal",
-                    _ => "Bilinmiyor"
-                },
+
                 StatusId = (int)x.Status,
                 Date = x.TransactionDate,
 
