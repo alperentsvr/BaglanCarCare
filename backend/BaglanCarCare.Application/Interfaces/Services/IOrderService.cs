@@ -20,5 +20,9 @@ namespace BaglanCarCare.Application.Interfaces.Services
 
         // Hata veren "SearchByPhoneOrPlateAsync" metodu buraya eklendi:
         Task<ServiceResponse<CustomerVehicleSearchDto>> SearchByPhoneOrPlateAsync(string text);
+
+        // YENİ: Item Bazlı Güncellemeler (Admin Onayı Sonrası)
+        Task<ServiceResponse<bool>> UpdateItemPriceAsync(int itemId, decimal newPrice);
+        Task<ServiceResponse<bool>> DeleteItemAsync(int itemId);
     }
 }

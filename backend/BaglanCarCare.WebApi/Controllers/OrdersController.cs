@@ -2,6 +2,7 @@
 using BaglanCarCare.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BaglanCarCare.WebApi.Controllers
@@ -53,16 +54,23 @@ namespace BaglanCarCare.WebApi.Controllers
         }
 
         [HttpPost("{id}/request-service-delete")]
-        public async Task<IActionResult> RequestServiceDelete(int id, [FromBody] dynamic data)
+        public async Task<IActionResult> RequestServiceDelete(int id, [FromBody] JsonElement data)
         {
             var username = User.Identity?.Name ?? "Bilinmiyor";
             string serviceName = data.GetProperty("serviceName").ToString();
             string note = data.GetProperty("note").ToString();
             
+            // YENİ: Item ID'si alınmalı (Frontend göndermeli)
+            int itemId = 0;
+            if(data.TryGetProperty("itemId", out var itemIdProp))
+            {
+                itemId = itemIdProp.GetInt32();
+            }
+
             var req = new CreateDeletionRequestDto 
             { 
-                TargetEntityName = "Order", 
-                TargetId = id, 
+                TargetEntityName = "OrderItem", 
+                TargetId = itemId != 0 ? itemId : id, 
                 Note = note,
                 RequestType = "ServiceDelete",
                 Details = $"Hizmet Silme: {serviceName}"
@@ -71,7 +79,7 @@ namespace BaglanCarCare.WebApi.Controllers
         }
 
         [HttpPost("{id}/request-price-change")]
-        public async Task<IActionResult> RequestPriceChange(int id, [FromBody] dynamic data)
+        public async Task<IActionResult> RequestPriceChange(int id, [FromBody] JsonElement data)
         {
             var username = User.Identity?.Name ?? "Bilinmiyor";
             string serviceName = data.GetProperty("serviceName").ToString();
@@ -79,10 +87,17 @@ namespace BaglanCarCare.WebApi.Controllers
             string newPrice = data.GetProperty("newPrice").ToString();
             string note = data.GetProperty("note").ToString();
 
+            // YENİ: Item ID'si alınmalı
+            int itemId = 0;
+            if(data.TryGetProperty("itemId", out var itemIdProp))
+            {
+                itemId = itemIdProp.GetInt32();
+            }
+
             var req = new CreateDeletionRequestDto 
             { 
-                TargetEntityName = "Order", 
-                TargetId = id, 
+                TargetEntityName = "OrderItem", 
+                TargetId = itemId != 0 ? itemId : id, 
                 Note = note,
                 RequestType = "PriceChange",
                 Details = $"Fiyat Değişimi: {serviceName} ({oldPrice} -> {newPrice})"

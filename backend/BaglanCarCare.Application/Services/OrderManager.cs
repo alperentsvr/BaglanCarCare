@@ -17,17 +17,61 @@ namespace BaglanCarCare.Application.Services
         private readonly IGenericRepository<Customer> _custRepo;
         private readonly IGenericRepository<Vehicle> _vehicleRepo;
         private readonly IGenericRepository<Personnel> _personnelRepo;
+        private readonly IGenericRepository<ServiceTransactionItem> _itemRepo;
 
         public OrderManager(
             IGenericRepository<ServiceTransaction> transRepo,
             IGenericRepository<Customer> custRepo,
             IGenericRepository<Vehicle> vehicleRepo,
-            IGenericRepository<Personnel> personnelRepo)
+            IGenericRepository<Personnel> personnelRepo,
+            IGenericRepository<ServiceTransactionItem> itemRepo) // <--- Added
         {
             _transRepo = transRepo;
             _custRepo = custRepo;
             _vehicleRepo = vehicleRepo;
             _personnelRepo = personnelRepo;
+            _itemRepo = itemRepo; // <--- Assigned
+        }
+
+        // ... existing methods ...
+
+        public async Task<ServiceResponse<bool>> UpdateItemPriceAsync(int itemId, decimal newPrice)
+        {
+            var item = await _itemRepo.GetByIdAsync(itemId);
+            if (item == null) return new ServiceResponse<bool>("Hizmet bulunamadı.", false);
+            
+            item.Price = newPrice;
+            await _itemRepo.UpdateAsync(item);
+            
+            await RecalculateOrderTotalAsync(item.ServiceTransactionId);
+            
+            return new ServiceResponse<bool>(true);
+        }
+
+        public async Task<ServiceResponse<bool>> DeleteItemAsync(int itemId)
+        {
+            var item = await _itemRepo.GetByIdAsync(itemId);
+            if (item == null) return new ServiceResponse<bool>("Hizmet bulunamadı.", false);
+
+            int orderId = item.ServiceTransactionId;
+            await _itemRepo.DeleteAsync(item);
+
+            await RecalculateOrderTotalAsync(orderId);
+
+            return new ServiceResponse<bool>(true);
+        }
+
+        private async Task RecalculateOrderTotalAsync(int orderId)
+        {
+            // GetAsync include desteklemediği için GetAllAsync + Filter kullanıyoruz
+            var orders = await _transRepo.GetAllAsync(x => x.TransactionItems);
+            var order = orders.FirstOrDefault(x => x.Id == orderId);
+
+            if (order != null)
+            {
+                order.TotalPrice = order.TransactionItems.Sum(i => i.Price);
+                await _transRepo.UpdateAsync(order);
+            }
         }
 
         // 1. LIST
@@ -65,6 +109,7 @@ namespace BaglanCarCare.Application.Services
                 SelectedServices = x.TransactionItems != null
                     ? x.TransactionItems.Select(i => new OrderItemDto
                     {
+                        Id = i.Id,
                         Category = i.Category,
                         Product = i.Name,
                         Part = i.SelectedParts,

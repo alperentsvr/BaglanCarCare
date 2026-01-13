@@ -177,10 +177,16 @@ const OrderDetailModal = ({ order, staff, user, onClose, onSave }) => {
                                             <button onClick={() => {
                                                 const newPrice = prompt(`"${svc.product}" için yeni fiyatı giriniz:`, svc.price);
                                                 if (newPrice && newPrice !== svc.price) {
-                                                    const note = prompt("Fiyat değişikliği için açıklama (opsiyonel):");
-                                                    orderService.requestPriceChange(order.id, { serviceName: svc.product, oldPrice: svc.price, newPrice, note })
-                                                        .then(() => alert("Fiyat değişim talebi iletildi."))
-                                                        .catch(e => alert("Hata: " + e.message));
+                                                    const svcId = svc.id || svc.Id;
+                                                    if (!svcId) {
+                                                        // Yeni eklenmiş (kaydedilmemiş) servis, direkt güncelle
+                                                        handleUpdateServicePrice(idx, newPrice);
+                                                    } else {
+                                                        const note = prompt("Fiyat değişikliği için açıklama (opsiyonel):");
+                                                        orderService.requestPriceChange(order.id, { itemId: svcId, serviceName: svc.product, oldPrice: svc.price, newPrice, note })
+                                                            .then(() => alert("Fiyat değişim talebi iletildi."))
+                                                            .catch(e => alert("Hata: " + e.message));
+                                                    }
                                                 }
                                             }} className="w-full text-right font-mono hover:text-blue-600 underline decoration-dashed underline-offset-4 cursor-pointer">
                                                 {svc.price}
@@ -194,11 +200,17 @@ const OrderDetailModal = ({ order, staff, user, onClose, onSave }) => {
                                             </button>
                                         ) : (
                                             <button onClick={() => {
-                                                const note = prompt(`"${svc.product}" silinecek. Açıklama giriniz:`);
-                                                if (note !== null) {
-                                                    orderService.requestServiceDelete(order.id, { serviceName: svc.product, note })
-                                                        .then(() => alert("Silme talebi iletildi."))
-                                                        .catch(e => alert("Hata: " + e.message));
+                                                const svcId = svc.id || svc.Id;
+                                                if (!svcId) {
+                                                    // Yeni eklenmiş (kaydedilmemiş) servis, direkt sil
+                                                    handleDeleteService(idx);
+                                                } else {
+                                                    const note = prompt(`"${svc.product}" silinecek. Açıklama giriniz:`);
+                                                    if (note !== null) {
+                                                        orderService.requestServiceDelete(order.id, { itemId: svcId, serviceName: svc.product, note })
+                                                            .then(() => alert("Silme talebi iletildi."))
+                                                            .catch(e => alert("Hata: " + e.message));
+                                                    }
                                                 }
                                             }} className="text-gray-400 hover:text-orange-500 transition-colors opacity-0 group-hover:opacity-100" title="Silme Talebi Oluştur">
                                                 <AlertTriangle size={16}/>

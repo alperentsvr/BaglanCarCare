@@ -234,24 +234,29 @@ const OrderList = ({ orders, onEdit, onDelete }) => {
                 TRANSACTION_STATUS.IN_PROGRESS,
                 TRANSACTION_STATUS.COMPLETED
             ].map(col => (
-                <div key={col.id} className={`flex flex-col h-full rounded-xl border ${col.color.replace('text-', 'border-').split(' ')[2] + ' ' + col.color.split(' ')[0]}`}>
-                    <div className="p-4 border-b border-gray-200/50 dark:border-dark-border/50 flex justify-between items-center bg-gray-50/50 dark:bg-dark-bg/20 rounded-t-xl">
-                        <h3 className="font-bold text-gray-800 dark:text-gray-100">{col.label}</h3>
-                        <span className="px-2 py-0.5 rounded-full bg-white dark:bg-dark-bg text-xs font-bold shadow-sm text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-dark-border">
+                <div key={col.id} className="flex flex-col h-full rounded-xl border border-gray-200 dark:border-dark-border bg-gray-50/30 dark:bg-dark-card/20">
+                    {/* Header with Color Accent */}
+                    <div className={`p-4 border-b border-gray-200 dark:border-dark-border flex justify-between items-center rounded-t-xl ${col.color.split(' ')[0].replace('bg-', 'bg-opacity-10 bg-')} ${col.color.split(' ').find(c=>c.startsWith('dark:text'))}`}>
+                        <div className="flex items-center gap-2">
+                             <div className={`w-3 h-3 rounded-full ${col.color.split(' ')[0].replace('100','500').replace('/30','')}`}></div>
+                             <h3 className="font-bold text-gray-800 dark:text-gray-100">{col.label}</h3>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-dark-bg text-xs font-bold shadow-sm border border-gray-100 dark:border-dark-border">
                             {filtered.filter(o => o.statusId === col.id).length}
                         </span>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                    
+                    <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
                         {filtered.filter(o => o.statusId === col.id).map(order => (
-                            <div key={order.id} onClick={() => onEdit(order)} className="bg-white dark:bg-dark-card p-3 rounded-lg shadow-sm border border-gray-200 dark:border-dark-border hover:shadow-md cursor-pointer transition-all group hover:border-blue-400 dark:hover:border-brand">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="font-mono font-bold text-gray-800 dark:text-gray-100">{order.plate}</span>
-                                    
+                            <div key={order.id} onClick={() => onEdit(order)} className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-sm border border-gray-200 dark:border-dark-border hover:shadow-md cursor-pointer transition-all group hover:border-blue-400 dark:hover:border-brand relative overflow-hidden">
+                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${col.color.split(' ')[0].replace('100','500').replace('/30','')}`}></div>
+                                <div className="flex justify-between items-start mb-2 pl-2">
+                                    <span className="font-mono font-bold text-lg text-gray-800 dark:text-gray-100">{order.plate}</span>
                                 </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 truncate">{order.customer}</p>
-                                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-500">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 pl-2 truncate">{order.customer}</p>
+                                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-500 pl-2 border-t pt-2 border-gray-50 dark:border-dark-border/50">
                                     <span>{order.vehicle}</span>
-                                    <span className="font-bold text-blue-600 dark:text-brand">₺{order.totalPrice?.toLocaleString()}</span>
+                                    <span className="font-bold text-base text-blue-600 dark:text-brand">₺{order.totalPrice?.toLocaleString()}</span>
                                 </div>
                             </div>
                         ))}

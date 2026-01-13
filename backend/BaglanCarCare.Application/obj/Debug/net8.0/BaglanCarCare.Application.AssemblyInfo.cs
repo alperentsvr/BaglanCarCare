@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BaglanCarCare.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+565d12ebb047654e9daffd30f37e8a083540abbd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+42a58c809dd97362d2a00cf287632751b51de8be")]
 [assembly: System.Reflection.AssemblyProductAttribute("BaglanCarCare.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BaglanCarCare.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

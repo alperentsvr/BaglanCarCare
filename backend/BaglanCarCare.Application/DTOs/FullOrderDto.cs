@@ -29,6 +29,7 @@ namespace BaglanCarCare.Application.DTOs
     // Ortak Kullanılan Hizmet Detay Objesi
     public class OrderItemDto
     {
+        public int Id { get; set; } // YENİ: Güncelleme/Silme işlemleri için gerekli
         public string Category { get; set; } = string.Empty;
         public string Product { get; set; } = string.Empty;
         public string? Spec { get; set; } // Varyant / Mikron

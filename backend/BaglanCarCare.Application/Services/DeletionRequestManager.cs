@@ -103,6 +103,32 @@ namespace BaglanCarCare.Application.Services
                          await _personnelService.DeleteAsync(request.TargetId);
                         deleteResult = true;
                         break;
+                    case "OrderItem": // Hizmet Fiyat veya Silme İşlemi
+                        if (request.RequestType == "PriceChange")
+                        {
+                            // "Details" içinden yeni fiyatı parse etmemiz gerekebilir ama 
+                            // daha güvenli yol: Request oluşturulurken Details'e JSON koymak veya 
+                            // basitçe Details stringinden çıkarmak.
+                            // Şimdilik Details formatı: "Fiyat Değişimi: {name} ({old} -> {new})"
+                            // Bu parse işi riskli. 
+                            // EN İYİSİ: DeletionRequest tablosuna 'NewValue' alanı eklemekti ama migration ile uğraşmayalım.
+                            // Regex ile parse edelim: "-> {new})"
+                            
+                            var parts = request.Details.Split("->");
+                            if(parts.Length > 1) {
+                                var priceStr = parts[1].Replace(")", "").Trim();
+                                if(decimal.TryParse(priceStr, out decimal newPrice)) {
+                                    await _orderService.UpdateItemPriceAsync(request.TargetId, newPrice);
+                                    deleteResult = true;
+                                }
+                            }
+                        }
+                        else if (request.RequestType == "ServiceDelete") 
+                        {
+                            await _orderService.DeleteItemAsync(request.TargetId);
+                            deleteResult = true;
+                        }
+                        break;
                     default:
                         return new ServiceResponse<bool>("Bilinmeyen hedef tipi.", false);
                 }
